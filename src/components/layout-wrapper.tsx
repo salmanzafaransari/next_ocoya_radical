@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import Script from "next/script";
 
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -12,7 +13,16 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isAuthPage = pathname?.startsWith("/auth");
 
   if (isAuthPage) {
-    return <>{children}</>;
+    return <>
+        {/* Google Identity Services script */}
+        <Script 
+          src="https://accounts.google.com/gsi/client" 
+          async 
+          defer 
+          strategy="afterInteractive" 
+        />
+        {children}
+    </>;
   }
 
   return (

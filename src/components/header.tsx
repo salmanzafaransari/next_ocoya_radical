@@ -1,25 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Settings, User, LogOut, HelpCircle, DollarSign } from "lucide-react";
-import API from "@/lib/axios"; 
+import {
+  Bell,
+  Settings,
+  User,
+  LogOut,
+  HelpCircle,
+  DollarSign,
+} from "lucide-react";
+import API from "@/lib/axios";
 
 export default function Header() {
-  console.log("Saved User:", JSON.parse(localStorage.getItem("user")));
-  const user = JSON.parse(localStorage.getItem("user"));
-
+  const [user, setUser] = useState<{ email?: string } | null>(null);
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
+  // ✅ Guarded effect: runs only in browser
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedUser = window.localStorage.getItem("user");
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (error) {
+        console.error("Failed to parse user from localStorage:", error);
+      }
+    }
+  }, []);
+
   const handleLogout = async () => {
     try {
-      await API.post("/auth/logout/"); 
+      await API.post("/auth/logout/");
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
-      // Always clear token and redirect
-      localStorage.removeItem("accessToken");
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("accessToken");
+        window.localStorage.removeItem("user");
+      }
       router.push("/auth");
     }
   };
@@ -53,7 +74,9 @@ export default function Header() {
                   <User size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-white font-medium">{user.email}</p>
+                  <p className="text-sm text-white font-medium">
+                    {user?.email || "Guest"}
+                  </p>
                   <span className="text-xs bg-white px-2 py-0.5 rounded-full">
                     Silver Plan
                   </span>
@@ -80,7 +103,7 @@ export default function Header() {
                 {/* Logout button */}
                 <button
                   onClick={handleLogout}
-                  className="flex flex-col items-center justify-center py-4 hover:bg-gray-50 text-red-500"
+                  className="flex flex-col hover:cursor-pointer items-center justify-center py-4 hover:bg-gray-50 text-red-500"
                 >
                   <LogOut size={18} />
                   <span className="text-xs mt-1">Sign Out</span>
